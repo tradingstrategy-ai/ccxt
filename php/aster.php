@@ -2794,16 +2794,16 @@ class aster extends Exchange {
          * @param {string} [$params->subType] "linear" or "inverse"
          * @return {array} a dictionary of ~@link https://docs.ccxt.com/#/?id=leverage-tiers-structure leverage tiers structures~, indexed by market $symbols
          */
-        throw new NotSupported($this->id . ' fetchLeverageTiers() implementation attempt failed');
-        // $this->load_markets();
+        // TODO => Unfinished - trying to make API to output something useful
+        $this->load_markets();
         // $type = null;
-        // list($type, $params) = $this->handle_market_type_and_params('fetchLeverageTiers', null, $params);
+        list(, $params) = $this->handle_market_type_and_params('fetchLeverageTiers', null, $params);
         // $subType = null;
-        // list($subType, $params) = $this->handle_sub_type_and_params('fetchLeverageTiers', null, $params, 'linear');
+        list(, $params) = $this->handle_sub_type_and_params('fetchLeverageTiers', null, $params, 'linear');
         // $isPortfolioMargin = null;
-        // list($isPortfolioMargin, $params) = $this->handle_option_and_params_2($params, 'fetchLeverageTiers', 'papi', 'portfolioMargin', false);
-        // $response = $this->publicGetFapiV1LeverageBracket ($params);
-        // return $response;
+        list(, $params) = $this->handle_option_and_params_2($params, 'fetchLeverageTiers', 'papi', 'portfolioMargin', false);
+        $response = $this->privateGetFapiV1LeverageBracket ($params);
+        return $response;
         // if ($this->is_linear($type, $subType)) {
         //     if ($isPortfolioMargin) {
         //         $response = $this->papiGetUmLeverageBracket ($params);

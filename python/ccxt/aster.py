@@ -2677,16 +2677,16 @@ class aster(Exchange, ImplicitAPI):
         :param str [params.subType]: "linear" or "inverse"
         :returns dict: a dictionary of `leverage tiers structures <https://docs.ccxt.com/#/?id=leverage-tiers-structure>`, indexed by market symbols
         """
-        raise NotSupported(self.id + ' fetchLeverageTiers() implementation attempt failed')
-        # self.load_markets()
+        # TODO: Unfinished - trying to make API to output something useful
+        self.load_markets()
         # type = None
-        # type, params = self.handle_market_type_and_params('fetchLeverageTiers', None, params)
+        [_ , params] = self.handle_market_type_and_params('fetchLeverageTiers', None, params)
         # subType = None
-        # subType, params = self.handle_sub_type_and_params('fetchLeverageTiers', None, params, 'linear')
+        [_ , params] = self.handle_sub_type_and_params('fetchLeverageTiers', None, params, 'linear')
         # isPortfolioMargin = None
-        # isPortfolioMargin, params = self.handle_option_and_params_2(params, 'fetchLeverageTiers', 'papi', 'portfolioMargin', False)
-        # response = self.publicGetFapiV1LeverageBracket(params)
-        # return response
+        [_, params] = self.handle_option_and_params_2(params, 'fetchLeverageTiers', 'papi', 'portfolioMargin', False)
+        response = self.privateGetFapiV1LeverageBracket(params)
+        return response
         # if self.is_linear(type, subType):
         #     if isPortfolioMargin:
         #         response = self.papiGetUmLeverageBracket(params)

@@ -2764,16 +2764,16 @@ class aster extends aster$1["default"] {
      * @returns {object} a dictionary of [leverage tiers structures]{@link https://docs.ccxt.com/#/?id=leverage-tiers-structure}, indexed by market symbols
      */
     async fetchLeverageTiers(symbols = undefined, params = {}) {
-        throw new errors.NotSupported(this.id + ' fetchLeverageTiers() implementation attempt failed');
-        // await this.loadMarkets ();
+        // TODO: Unfinished - trying to make API to output something useful
+        await this.loadMarkets();
         // let type = undefined;
-        // [ type, params ] = this.handleMarketTypeAndParams ('fetchLeverageTiers', undefined, params);
+        [, params] = this.handleMarketTypeAndParams('fetchLeverageTiers', undefined, params);
         // let subType = undefined;
-        // [ subType, params ] = this.handleSubTypeAndParams ('fetchLeverageTiers', undefined, params, 'linear');
+        [, params] = this.handleSubTypeAndParams('fetchLeverageTiers', undefined, params, 'linear');
         // let isPortfolioMargin = undefined;
-        // [ isPortfolioMargin, params ] = this.handleOptionAndParams2 (params, 'fetchLeverageTiers', 'papi', 'portfolioMargin', false);
-        // const response = await this.publicGetFapiV1LeverageBracket (params);
-        // return response;
+        [, params] = this.handleOptionAndParams2(params, 'fetchLeverageTiers', 'papi', 'portfolioMargin', false);
+        const response = await this.privateGetFapiV1LeverageBracket(params);
+        return response;
         // if (this.isLinear (type, subType)) {
         //     if (isPortfolioMargin) {
         //         response = await this.papiGetUmLeverageBracket (params);
