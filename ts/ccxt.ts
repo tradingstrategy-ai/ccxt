@@ -40,7 +40,7 @@ import {BaseError, ExchangeError, AuthenticationError, PermissionDenied, Account
 //-----------------------------------------------------------------------------
 // this is updated by vss.js when building
 
-const version = '4.4.99';
+const version = '4.5.5';
 
 (Exchange as any).ccxtVersion = version
 
@@ -49,7 +49,11 @@ const version = '4.4.99';
 import alpaca from  './src/alpaca.js'
 import apex from  './src/apex.js'
 import ascendex from  './src/ascendex.js'
+<<<<<<< HEAD
 import aster from  './src/aster.js'
+=======
+import backpack from  './src/backpack.js'
+>>>>>>> master
 import bequant from  './src/bequant.js'
 import bigone from  './src/bigone.js'
 import binance from  './src/binance.js'
@@ -100,7 +104,6 @@ import delta from  './src/delta.js'
 import deribit from  './src/deribit.js'
 import derive from  './src/derive.js'
 import digifinex from  './src/digifinex.js'
-import ellipx from  './src/ellipx.js'
 import exmo from  './src/exmo.js'
 import fmfwio from  './src/fmfwio.js'
 import foxbit from  './src/foxbit.js'
@@ -143,9 +146,8 @@ import poloniex from  './src/poloniex.js'
 import probit from  './src/probit.js'
 import timex from  './src/timex.js'
 import tokocrypto from  './src/tokocrypto.js'
-import tradeogre from  './src/tradeogre.js'
+import toobit from  './src/toobit.js'
 import upbit from  './src/upbit.js'
-import vertex from  './src/vertex.js'
 import wavesexchange from  './src/wavesexchange.js'
 import whitebit from  './src/whitebit.js'
 import woo from  './src/woo.js'
@@ -160,7 +162,11 @@ import zonda from  './src/zonda.js'
 import alpacaPro from  './src/pro/alpaca.js'
 import apexPro from  './src/pro/apex.js'
 import ascendexPro from  './src/pro/ascendex.js'
+<<<<<<< HEAD
 import asterPro from  './src/pro/aster.js'
+=======
+import backpackPro from  './src/pro/backpack.js'
+>>>>>>> master
 import bequantPro from  './src/pro/bequant.js'
 import binancePro from  './src/pro/binance.js'
 import binancecoinmPro from  './src/pro/binancecoinm.js'
@@ -224,9 +230,8 @@ import paradexPro from  './src/pro/paradex.js'
 import phemexPro from  './src/pro/phemex.js'
 import poloniexPro from  './src/pro/poloniex.js'
 import probitPro from  './src/pro/probit.js'
-import tradeogrePro from  './src/pro/tradeogre.js'
+import toobitPro from  './src/pro/toobit.js'
 import upbitPro from  './src/pro/upbit.js'
-import vertexPro from  './src/pro/vertex.js'
 import whitebitPro from  './src/pro/whitebit.js'
 import wooPro from  './src/pro/woo.js'
 import woofiproPro from  './src/pro/woofipro.js'
@@ -236,7 +241,11 @@ const exchanges = {
     'alpaca':                 alpaca,
     'apex':                   apex,
     'ascendex':               ascendex,
+<<<<<<< HEAD
     'aster':                  aster,
+=======
+    'backpack':               backpack,
+>>>>>>> master
     'bequant':                bequant,
     'bigone':                 bigone,
     'binance':                binance,
@@ -287,7 +296,6 @@ const exchanges = {
     'deribit':                deribit,
     'derive':                 derive,
     'digifinex':              digifinex,
-    'ellipx':                 ellipx,
     'exmo':                   exmo,
     'fmfwio':                 fmfwio,
     'foxbit':                 foxbit,
@@ -330,9 +338,8 @@ const exchanges = {
     'probit':                 probit,
     'timex':                  timex,
     'tokocrypto':             tokocrypto,
-    'tradeogre':              tradeogre,
+    'toobit':                 toobit,
     'upbit':                  upbit,
-    'vertex':                 vertex,
     'wavesexchange':          wavesexchange,
     'whitebit':               whitebit,
     'woo':                    woo,
@@ -347,7 +354,11 @@ const pro = {
     'alpaca':                 alpacaPro,
     'apex':                   apexPro,
     'ascendex':               ascendexPro,
+<<<<<<< HEAD
     'aster':                  asterPro,
+=======
+    'backpack':               backpackPro,
+>>>>>>> master
     'bequant':                bequantPro,
     'binance':                binancePro,
     'binancecoinm':           binancecoinmPro,
@@ -411,9 +422,8 @@ const pro = {
     'phemex':                 phemexPro,
     'poloniex':               poloniexPro,
     'probit':                 probitPro,
-    'tradeogre':              tradeogrePro,
+    'toobit':                 toobitPro,
     'upbit':                  upbitPro,
-    'vertex':                 vertexPro,
     'whitebit':               whitebitPro,
     'woo':                    wooPro,
     'woofipro':               woofiproPro,
@@ -565,7 +575,11 @@ export {
     alpaca,
     apex,
     ascendex,
+<<<<<<< HEAD
     aster,
+=======
+    backpack,
+>>>>>>> master
     bequant,
     bigone,
     binance,
@@ -616,7 +630,6 @@ export {
     deribit,
     derive,
     digifinex,
-    ellipx,
     exmo,
     fmfwio,
     foxbit,
@@ -659,9 +672,8 @@ export {
     probit,
     timex,
     tokocrypto,
-    tradeogre,
+    toobit,
     upbit,
-    vertex,
     wavesexchange,
     whitebit,
     woo,

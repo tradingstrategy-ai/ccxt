@@ -235,6 +235,7 @@ export default class kraken extends Exchange {
                 'UST': 'USTC',
                 'XBT': 'BTC',
                 'XDG': 'DOGE',
+                'FEE': 'KFEE',
             },
             'options': {
                 'timeDifference': 0, // the difference between system clock and Binance clock
@@ -428,6 +429,7 @@ export default class kraken extends Exchange {
                     'OriginTrail': 'OTP',
                     'Celestia': 'TIA',
                 },
+                'marketHelperProps': [ 'marketsByAltname', 'delistedMarketsById' ], // used by setMarketsFromExchange
             },
             'features': {
                 'spot': {
@@ -706,19 +708,6 @@ export default class kraken extends Exchange {
         }
         this.options['marketsByAltname'] = this.indexBy (result, 'altname');
         return result;
-    }
-
-    safeCurrency (currencyId, currency: Currency = undefined) {
-        if (currencyId !== undefined) {
-            if (currencyId.length > 3) {
-                if ((currencyId.indexOf ('X') === 0) || (currencyId.indexOf ('Z') === 0)) {
-                    if (!(currencyId.indexOf ('.') > 0) && (currencyId !== 'ZEUS')) {
-                        currencyId = currencyId.slice (1);
-                    }
-                }
-            }
-        }
-        return super.safeCurrency (currencyId, currency);
     }
 
     /**
@@ -3226,7 +3215,7 @@ export default class kraken extends Exchange {
      * @see https://docs.kraken.com/rest/#tag/Funding/operation/withdrawFunds
      * @param {string} code unified currency code
      * @param {float} amount the amount to withdraw
-     * @param {string} address the address to withdraw to
+     * @param {string} address the address to withdraw to, not required can be '' or undefined/none/null
      * @param {string} tag
      * @param {object} [params] extra parameters specific to the exchange API endpoint
      * @returns {object} a [transaction structure]{@link https://docs.ccxt.com/#/?id=transaction-structure}
@@ -3240,8 +3229,11 @@ export default class kraken extends Exchange {
             const request: Dict = {
                 'asset': currency['id'],
                 'amount': amount,
-                'address': address,
+                // 'address': address,
             };
+            if (address !== undefined && address !== '') {
+                request['address'] = address;
+            }
             const response = await this.privatePostWithdraw (this.extend (request, params));
             //
             //     {

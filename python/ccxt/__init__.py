@@ -22,7 +22,7 @@
 
 # ----------------------------------------------------------------------------
 
-__version__ = '4.4.99'
+__version__ = '4.5.5'
 
 # ----------------------------------------------------------------------------
 
@@ -87,7 +87,11 @@ from ccxt.base.errors import error_hierarchy                          # noqa: F4
 from ccxt.alpaca import alpaca                                        # noqa: F401
 from ccxt.apex import apex                                            # noqa: F401
 from ccxt.ascendex import ascendex                                    # noqa: F401
+<<<<<<< HEAD
 from ccxt.aster import aster                                          # noqa: F401
+=======
+from ccxt.backpack import backpack                                    # noqa: F401
+>>>>>>> master
 from ccxt.bequant import bequant                                      # noqa: F401
 from ccxt.bigone import bigone                                        # noqa: F401
 from ccxt.binance import binance                                      # noqa: F401
@@ -138,7 +142,6 @@ from ccxt.delta import delta                                          # noqa: F4
 from ccxt.deribit import deribit                                      # noqa: F401
 from ccxt.derive import derive                                        # noqa: F401
 from ccxt.digifinex import digifinex                                  # noqa: F401
-from ccxt.ellipx import ellipx                                        # noqa: F401
 from ccxt.exmo import exmo                                            # noqa: F401
 from ccxt.fmfwio import fmfwio                                        # noqa: F401
 from ccxt.foxbit import foxbit                                        # noqa: F401
@@ -181,9 +184,8 @@ from ccxt.poloniex import poloniex                                    # noqa: F4
 from ccxt.probit import probit                                        # noqa: F401
 from ccxt.timex import timex                                          # noqa: F401
 from ccxt.tokocrypto import tokocrypto                                # noqa: F401
-from ccxt.tradeogre import tradeogre                                  # noqa: F401
+from ccxt.toobit import toobit                                        # noqa: F401
 from ccxt.upbit import upbit                                          # noqa: F401
-from ccxt.vertex import vertex                                        # noqa: F401
 from ccxt.wavesexchange import wavesexchange                          # noqa: F401
 from ccxt.whitebit import whitebit                                    # noqa: F401
 from ccxt.woo import woo                                              # noqa: F401
@@ -197,7 +199,11 @@ exchanges = [
     'alpaca',
     'apex',
     'ascendex',
+<<<<<<< HEAD
     'aster',
+=======
+    'backpack',
+>>>>>>> master
     'bequant',
     'bigone',
     'binance',
@@ -248,7 +254,6 @@ exchanges = [
     'deribit',
     'derive',
     'digifinex',
-    'ellipx',
     'exmo',
     'fmfwio',
     'foxbit',
@@ -291,9 +296,8 @@ exchanges = [
     'probit',
     'timex',
     'tokocrypto',
-    'tradeogre',
+    'toobit',
     'upbit',
-    'vertex',
     'wavesexchange',
     'whitebit',
     'woo',

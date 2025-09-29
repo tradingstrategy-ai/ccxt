@@ -13,8 +13,16 @@ export default class binance extends Exchange {
     market(symbol: string): MarketInterface;
     safeMarket(marketId?: Str, market?: Market, delimiter?: Str, marketType?: Str): MarketInterface;
     costToPrecision(symbol: any, cost: any): string;
-    currencyToPrecision(code: any, fee: any, networkCode?: any): string;
     nonce(): number;
+    /**
+     * @method
+     * @name binance#enableDemoTrading
+     * @description enables or disables demo trading mode
+     * @see https://www.binance.com/en/support/faq/detail/9be58f73e5e14338809e3b705b9687dd
+     * @see https://demo.binance.com/en/my/settings/api-management
+     * @param {boolean} [enable] true if demo trading should be enabled, false otherwise
+     */
+    enableDemoTrading(enable: boolean): void;
     /**
      * @method
      * @name binance#fetchTime
@@ -614,6 +622,7 @@ export default class binance extends Exchange {
      * @param {string[]} ids order ids
      * @param {string} [symbol] unified market symbol
      * @param {object} [params] extra parameters specific to the exchange API endpoint
+     * @param {string[]} [params.clientOrderIds] alternative to ids, array of client order ids
      *
      * EXCHANGE SPECIFIC PARAMETERS
      * @param {string[]} [params.origClientOrderIdList] max length 10 e.g. ["my_id_1","my_id_2"], encode the double quotes. No space after comma
@@ -684,7 +693,7 @@ export default class binance extends Exchange {
         price: number;
         cost: number;
         fee: {
-            currency: any;
+            currency: string;
             cost: number;
         };
         info: any;

@@ -22,7 +22,11 @@ Exchange::$exchanges = array(
     'alpaca',
     'apex',
     'ascendex',
+<<<<<<< HEAD
     'aster',
+=======
+    'backpack',
+>>>>>>> master
     'bequant',
     'binance',
     'binancecoinm',
@@ -86,9 +90,8 @@ Exchange::$exchanges = array(
     'phemex',
     'poloniex',
     'probit',
-    'tradeogre',
+    'toobit',
     'upbit',
-    'vertex',
     'whitebit',
     'woo',
     'woofipro',

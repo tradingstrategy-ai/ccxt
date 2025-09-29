@@ -252,6 +252,7 @@ class kraken(Exchange, ImplicitAPI):
                 'UST': 'USTC',
                 'XBT': 'BTC',
                 'XDG': 'DOGE',
+                'FEE': 'KFEE',
             },
             'options': {
                 'timeDifference': 0,  # the difference between system clock and Binance clock
@@ -445,6 +446,7 @@ class kraken(Exchange, ImplicitAPI):
                     'OriginTrail': 'OTP',
                     'Celestia': 'TIA',
                 },
+                'marketHelperProps': ['marketsByAltname', 'delistedMarketsById'],  # used by setMarketsFromExchange
             },
             'features': {
                 'spot': {
@@ -715,14 +717,6 @@ class kraken(Exchange, ImplicitAPI):
             })
         self.options['marketsByAltname'] = self.index_by(result, 'altname')
         return result
-
-    def safe_currency(self, currencyId, currency: Currency = None):
-        if currencyId is not None:
-            if len(currencyId) > 3:
-                if (currencyId.find('X') == 0) or (currencyId.find('Z') == 0):
-                    if not (currencyId.find('.') > 0) and (currencyId != 'ZEUS'):
-                        currencyId = currencyId[1:]
-        return super(kraken, self).safe_currency(currencyId, currency)
 
     async def fetch_status(self, params={}):
         """
@@ -3046,7 +3040,7 @@ class kraken(Exchange, ImplicitAPI):
 
         :param str code: unified currency code
         :param float amount: the amount to withdraw
-        :param str address: the address to withdraw to
+        :param str address: the address to withdraw to, not required can be '' or None/none/None
         :param str tag:
         :param dict [params]: extra parameters specific to the exchange API endpoint
         :returns dict: a `transaction structure <https://docs.ccxt.com/#/?id=transaction-structure>`
@@ -3059,8 +3053,10 @@ class kraken(Exchange, ImplicitAPI):
             request: dict = {
                 'asset': currency['id'],
                 'amount': amount,
-                'address': address,
+                # 'address': address,
             }
+            if address is not None and address != '':
+                request['address'] = address
             response = await self.privatePostWithdraw(self.extend(request, params))
             #
             #     {

@@ -194,6 +194,20 @@ public partial class binance : Exchange
                     { "private", "https://testnet.binance.vision/api/v3" },
                     { "v1", "https://testnet.binance.vision/api/v1" },
                 } },
+                { "demo", new Dictionary<string, object>() {
+                    { "dapiPublic", "https://demo-dapi.binance.com/dapi/v1" },
+                    { "dapiPrivate", "https://demo-dapi.binance.com/dapi/v1" },
+                    { "dapiPrivateV2", "https://demo-dapi.binance.com/dapi/v2" },
+                    { "fapiPublic", "https://demo-fapi.binance.com/fapi/v1" },
+                    { "fapiPublicV2", "https://demo-fapi.binance.com/fapi/v2" },
+                    { "fapiPublicV3", "https://demo-fapi.binance.com/fapi/v3" },
+                    { "fapiPrivate", "https://demo-fapi.binance.com/fapi/v1" },
+                    { "fapiPrivateV2", "https://demo-fapi.binance.com/fapi/v2" },
+                    { "fapiPrivateV3", "https://demo-fapi.binance.com/fapi/v3" },
+                    { "public", "https://demo-api.binance.com/api/v3" },
+                    { "private", "https://demo-api.binance.com/api/v3" },
+                    { "v1", "https://demo-api.binance.com/api/v1" },
+                } },
                 { "api", new Dictionary<string, object>() {
                     { "sapi", "https://api.binance.com/sapi/v1" },
                     { "sapiV2", "https://api.binance.com/sapi/v2" },
@@ -1310,6 +1324,7 @@ public partial class binance : Exchange
                 { "defaultSubType", null },
                 { "hasAlreadyAuthenticatedSuccessfully", false },
                 { "warnOnFetchOpenOrdersWithoutSymbol", true },
+                { "currencyToPrecisionRoundingMode", TRUNCATE },
                 { "throwMarginModeAlreadySet", false },
                 { "fetchPositions", "positionRisk" },
                 { "recvWindow", multiply(10, 1000) },
@@ -1413,6 +1428,9 @@ public partial class binance : Exchange
             { "features", new Dictionary<string, object>() {
                 { "spot", new Dictionary<string, object>() {
                     { "sandbox", true },
+                    { "fetchCurrencies", new Dictionary<string, object>() {
+                        { "private", true },
+                    } },
                     { "createOrder", new Dictionary<string, object>() {
                         { "marginMode", true },
                         { "triggerPrice", true },
@@ -2694,21 +2712,36 @@ public partial class binance : Exchange
         return this.decimalToPrecision(cost, TRUNCATE, getValue(getValue(getValue(this.markets, symbol), "precision"), "quote"), this.precisionMode, this.paddingMode);
     }
 
-    public override object currencyToPrecision(object code, object fee, object networkCode = null)
-    {
-        // info is available in currencies only if the user has configured his api keys
-        if (isTrue(!isEqual(this.safeValue(getValue(this.currencies, code), "precision"), null)))
-        {
-            return this.decimalToPrecision(fee, TRUNCATE, getValue(getValue(this.currencies, code), "precision"), this.precisionMode, this.paddingMode);
-        } else
-        {
-            return this.numberToString(fee);
-        }
-    }
-
     public override object nonce()
     {
         return subtract(this.milliseconds(), getValue(this.options, "timeDifference"));
+    }
+
+    /**
+     * @method
+     * @name binance#enableDemoTrading
+     * @description enables or disables demo trading mode
+     * @see https://www.binance.com/en/support/faq/detail/9be58f73e5e14338809e3b705b9687dd
+     * @see https://demo.binance.com/en/my/settings/api-management
+     * @param {boolean} [enable] true if demo trading should be enabled, false otherwise
+     */
+    public override void enableDemoTrading(object enable)
+    {
+        if (isTrue(this.isSandboxModeEnabled))
+        {
+            throw new NotSupported ((string)add(this.id, " demo trading is not supported in the sandbox environment. Please check https://www.binance.com/en/support/faq/detail/9be58f73e5e14338809e3b705b9687dd to see the differences")) ;
+        }
+        if (isTrue(enable))
+        {
+            ((IDictionary<string,object>)this.urls)["apiBackupDemoTrading"] = getValue(this.urls, "api");
+            ((IDictionary<string,object>)this.urls)["api"] = getValue(this.urls, "demo");
+        } else if (isTrue(inOp(this.urls, "apiBackupDemoTrading")))
+        {
+            ((IDictionary<string,object>)this.urls)["api"] = ((object)getValue(this.urls, "apiBackupDemoTrading"));
+            object newUrls = this.omit(this.urls, "apiBackupDemoTrading");
+            this.urls = newUrls;
+        }
+        ((IDictionary<string,object>)this.options)["enableDemoTrading"] = enable;
     }
 
     /**
@@ -2761,7 +2794,7 @@ public partial class binance : Exchange
         object fetchCurrenciesEnabled = this.safeBool(this.options, "fetchCurrencies");
         if (!isTrue(fetchCurrenciesEnabled))
         {
-            return null;
+            return new Dictionary<string, object>() {};
         }
         // this endpoint requires authentication
         // while fetchCurrencies is a public API method by design
@@ -2769,13 +2802,18 @@ public partial class binance : Exchange
         // and fallback to generating the currencies from the markets
         if (!isTrue(this.checkRequiredCredentials(false)))
         {
-            return null;
+            return new Dictionary<string, object>() {};
         }
         // sandbox/testnet does not support sapi endpoints
         object apiBackup = this.safeValue(this.urls, "apiBackup");
         if (isTrue(!isEqual(apiBackup, null)))
         {
-            return null;
+            return new Dictionary<string, object>() {};
+        }
+        // demotrading does not support sapi endpoints
+        if (isTrue(this.safeBool(this.options, "enableDemoTrading", false)))
+        {
+            return new Dictionary<string, object>() {};
         }
         object promises = new List<object> {this.sapiGetCapitalConfigGetall(parameters)};
         object fetchMargins = this.safeBool(this.options, "fetchMargins", false);
@@ -2852,7 +2890,7 @@ public partial class binance : Exchange
             //                "addressRegex": "^(bnb1)[0-9a-z]{38}$",
             //                "addressRule": "",
             //                "memoRegex": "^[0-9A-Za-z\\-_]{1,120}$",
-            //                "withdrawFee": "0.002",
+            //                "withdrawFee": "0.003",
             //                "withdrawMin": "0.01",
             //                "withdrawMax": "10000000000",
             //                "minConfirm": "1",
@@ -3034,11 +3072,13 @@ public partial class binance : Exchange
             }
         }
         object sandboxMode = this.safeBool(this.options, "sandboxMode", false);
+        object demoMode = this.safeBool(this.options, "enableDemoTrading", false);
+        object isDemoEnv = isTrue(demoMode) || isTrue(sandboxMode);
         object fetchMarkets = new List<object>() {};
         for (object i = 0; isLessThan(i, getArrayLength(rawFetchMarkets)); postFixIncrement(ref i))
         {
             object type = getValue(rawFetchMarkets, i);
-            if (isTrue(isTrue(isEqual(type, "option")) && isTrue(sandboxMode)))
+            if (isTrue(isTrue(isEqual(type, "option")) && isTrue(isDemoEnv)))
             {
                 continue;
             }
@@ -3051,7 +3091,7 @@ public partial class binance : Exchange
             if (isTrue(isEqual(marketType, "spot")))
             {
                 ((IList<object>)promisesRaw).Add(this.publicGetExchangeInfo(parameters));
-                if (isTrue(isTrue(isTrue(fetchMargins) && isTrue(this.checkRequiredCredentials(false))) && !isTrue(sandboxMode)))
+                if (isTrue(isTrue(isTrue(fetchMargins) && isTrue(this.checkRequiredCredentials(false))) && !isTrue(isDemoEnv)))
                 {
                     ((IList<object>)promisesRaw).Add(this.sapiGetMarginAllPairs(parameters));
                     ((IList<object>)promisesRaw).Add(this.sapiGetMarginIsolatedAllPairs(parameters));
@@ -6605,6 +6645,7 @@ public partial class binance : Exchange
         object isConditional = isTrue(isTrue(isTrue(isTriggerOrder) || isTrue(isTrailingPercentOrder)) || isTrue(isStopLoss)) || isTrue(isTakeProfit);
         object isPortfolioMarginConditional = (isTrue(isPortfolioMargin) && isTrue(isConditional));
         object isPriceMatch = !isEqual(priceMatch, null);
+        object priceRequiredForTrailing = true;
         object uppercaseType = ((string)type).ToUpper();
         object stopPrice = null;
         if (isTrue(isTrailingPercentOrder))
@@ -6619,22 +6660,37 @@ public partial class binance : Exchange
                 }
             } else
             {
-                if (isTrue(isMarketOrder))
+                if (isTrue(isTrue(isTrue(isTrue((!isEqual(uppercaseType, "STOP_LOSS"))) && isTrue((!isEqual(uppercaseType, "TAKE_PROFIT")))) && isTrue((!isEqual(uppercaseType, "STOP_LOSS_LIMIT")))) && isTrue((!isEqual(uppercaseType, "TAKE_PROFIT_LIMIT")))))
                 {
-                    throw new InvalidOrder ((string)add(add(add(add(add(this.id, " trailingPercent orders are not supported for "), symbol), " "), type), " orders")) ;
+                    object stopLossOrTakeProfit = this.safeString(parameters, "stopLossOrTakeProfit");
+                    parameters = this.omit(parameters, "stopLossOrTakeProfit");
+                    if (isTrue(isTrue((!isEqual(stopLossOrTakeProfit, "stopLoss"))) && isTrue((!isEqual(stopLossOrTakeProfit, "takeProfit")))))
+                    {
+                        throw new InvalidOrder ((string)add(add(this.id, symbol), " trailingPercent orders require a stopLossOrTakeProfit parameter of either stopLoss or takeProfit")) ;
+                    }
+                    if (isTrue(isMarketOrder))
+                    {
+                        if (isTrue(isEqual(stopLossOrTakeProfit, "stopLoss")))
+                        {
+                            uppercaseType = "STOP_LOSS";
+                        } else if (isTrue(isEqual(stopLossOrTakeProfit, "takeProfit")))
+                        {
+                            uppercaseType = "TAKE_PROFIT";
+                        }
+                    } else
+                    {
+                        if (isTrue(isEqual(stopLossOrTakeProfit, "stopLoss")))
+                        {
+                            uppercaseType = "STOP_LOSS_LIMIT";
+                        } else if (isTrue(isEqual(stopLossOrTakeProfit, "takeProfit")))
+                        {
+                            uppercaseType = "TAKE_PROFIT_LIMIT";
+                        }
+                    }
                 }
-                object stopLossOrTakeProfit = this.safeString(parameters, "stopLossOrTakeProfit");
-                parameters = this.omit(parameters, "stopLossOrTakeProfit");
-                if (isTrue(isTrue(!isEqual(stopLossOrTakeProfit, "stopLoss")) && isTrue(!isEqual(stopLossOrTakeProfit, "takeProfit"))))
+                if (isTrue(isTrue((isEqual(uppercaseType, "STOP_LOSS"))) || isTrue((isEqual(uppercaseType, "TAKE_PROFIT")))))
                 {
-                    throw new InvalidOrder ((string)add(add(this.id, symbol), " trailingPercent orders require a stopLossOrTakeProfit parameter of either stopLoss or takeProfit")) ;
-                }
-                if (isTrue(isEqual(stopLossOrTakeProfit, "stopLoss")))
-                {
-                    uppercaseType = "STOP_LOSS_LIMIT";
-                } else if (isTrue(isEqual(stopLossOrTakeProfit, "takeProfit")))
-                {
-                    uppercaseType = "TAKE_PROFIT_LIMIT";
+                    priceRequiredForTrailing = false;
                 }
                 if (isTrue(!isEqual(trailingTriggerPrice, null)))
                 {
@@ -6808,7 +6864,7 @@ public partial class binance : Exchange
         {
             triggerPriceIsRequired = true;
             quantityIsRequired = true;
-            if (isTrue(isTrue(getValue(market, "linear")) || isTrue(getValue(market, "inverse"))))
+            if (isTrue(isTrue((isTrue(getValue(market, "linear")) || isTrue(getValue(market, "inverse")))) && isTrue(priceRequiredForTrailing)))
             {
                 priceIsRequired = true;
             }
@@ -6847,21 +6903,14 @@ public partial class binance : Exchange
         }
         if (isTrue(quantityIsRequired))
         {
-            // portfolio margin has a different amount precision
-            if (isTrue(isPortfolioMargin))
+            object marketAmountPrecision = this.safeString(getValue(market, "precision"), "amount");
+            object isPrecisionAvailable = (!isEqual(marketAmountPrecision, null));
+            if (isTrue(isPrecisionAvailable))
             {
-                ((IDictionary<string,object>)request)["quantity"] = this.parseToNumeric(amount);
+                ((IDictionary<string,object>)request)["quantity"] = this.amountToPrecision(symbol, amount);
             } else
             {
-                object marketAmountPrecision = this.safeString(getValue(market, "precision"), "amount");
-                object isPrecisionAvailable = (!isEqual(marketAmountPrecision, null));
-                if (isTrue(isPrecisionAvailable))
-                {
-                    ((IDictionary<string,object>)request)["quantity"] = this.amountToPrecision(symbol, amount);
-                } else
-                {
-                    ((IDictionary<string,object>)request)["quantity"] = this.parseToNumeric(amount); // some options don't have the precision available
-                }
+                ((IDictionary<string,object>)request)["quantity"] = this.parseToNumeric(amount); // some options don't have the precision available
             }
         }
         if (isTrue(isTrue(priceIsRequired) && !isTrue(isPriceMatch)))
@@ -8118,6 +8167,7 @@ public partial class binance : Exchange
      * @param {string[]} ids order ids
      * @param {string} [symbol] unified market symbol
      * @param {object} [params] extra parameters specific to the exchange API endpoint
+     * @param {string[]} [params.clientOrderIds] alternative to ids, array of client order ids
      *
      * EXCHANGE SPECIFIC PARAMETERS
      * @param {string[]} [params.origClientOrderIdList] max length 10 e.g. ["my_id_1","my_id_2"], encode the double quotes. No space after comma
@@ -8139,8 +8189,16 @@ public partial class binance : Exchange
         }
         object request = new Dictionary<string, object>() {
             { "symbol", getValue(market, "id") },
-            { "orderidlist", ids },
         };
+        object origClientOrderIdList = this.safeList2(parameters, "origClientOrderIdList", "clientOrderIds");
+        if (isTrue(!isEqual(origClientOrderIdList, null)))
+        {
+            parameters = this.omit(parameters, new List<object>() {"clientOrderIds"});
+            ((IDictionary<string,object>)request)["origClientOrderIdList"] = origClientOrderIdList;
+        } else
+        {
+            ((IDictionary<string,object>)request)["orderidlist"] = ids;
+        }
         object response = null;
         if (isTrue(getValue(market, "linear")))
         {
@@ -9689,7 +9747,6 @@ public partial class binance : Exchange
         object request = new Dictionary<string, object>() {
             { "coin", getValue(currency, "id") },
             { "address", address },
-            { "amount", this.currencyToPrecision(code, amount) },
         };
         if (isTrue(!isEqual(tag, null)))
         {
@@ -9703,6 +9760,7 @@ public partial class binance : Exchange
             ((IDictionary<string,object>)request)["network"] = network;
             parameters = this.omit(parameters, "network");
         }
+        ((IDictionary<string,object>)request)["amount"] = this.currencyToPrecision(code, amount, network);
         object response = await this.sapiPostCapitalWithdrawApply(this.extend(request, parameters));
         //     { id: '9a67628b16ba4988ae20d329333f16bc' }
         return this.parseTransaction(response, currency);
@@ -11799,11 +11857,17 @@ public partial class binance : Exchange
     public async override Task<object> setPositionMode(object hedged, object symbol = null, object parameters = null)
     {
         parameters ??= new Dictionary<string, object>();
-        object defaultType = this.safeString(this.options, "defaultType", "future");
-        object type = this.safeString(parameters, "type", defaultType);
-        parameters = this.omit(parameters, new List<object>() {"type"});
+        object market = null;
+        if (isTrue(!isEqual(symbol, null)))
+        {
+            market = this.market(symbol);
+        }
+        object type = null;
+        var typeparametersVariable = this.handleMarketTypeAndParams("setPositionMode", market, parameters);
+        type = ((IList<object>)typeparametersVariable)[0];
+        parameters = ((IList<object>)typeparametersVariable)[1];
         object subType = null;
-        var subTypeparametersVariable = this.handleSubTypeAndParams("setPositionMode", null, parameters);
+        var subTypeparametersVariable = this.handleSubTypeAndParams("setPositionMode", market, parameters);
         subType = ((IList<object>)subTypeparametersVariable)[0];
         parameters = ((IList<object>)subTypeparametersVariable)[1];
         object isPortfolioMargin = null;
@@ -12335,7 +12399,7 @@ public partial class binance : Exchange
         //         "asset": "USDT",
         //         "amount": "-0.16518203",
         //         "type": "FEE",
-        //         "createDate": 1676621042489
+        //         "createDate": 167662104241
         //     }
         //
         // futures (fapi, dapi, papi)
@@ -12564,8 +12628,8 @@ public partial class binance : Exchange
                 if (isTrue(isTrue((isEqual(method, "DELETE"))) && isTrue((isEqual(path, "batchOrders")))))
                 {
                     object orderidlist = this.safeList(extendedParams, "orderidlist", new List<object>() {});
-                    object origclientorderidlist = this.safeList(extendedParams, "origclientorderidlist", new List<object>() {});
-                    extendedParams = this.omit(extendedParams, new List<object>() {"orderidlist", "origclientorderidlist"});
+                    object origclientorderidlist = this.safeList2(extendedParams, "origclientorderidlist", "origClientOrderIdList", new List<object>() {});
+                    extendedParams = this.omit(extendedParams, new List<object>() {"orderidlist", "origclientorderidlist", "origClientOrderIdList"});
                     query = this.rawencode(extendedParams);
                     object orderidlistLength = getArrayLength(orderidlist);
                     object origclientorderidlistLength = getArrayLength(origclientorderidlist);
@@ -12575,7 +12639,13 @@ public partial class binance : Exchange
                     }
                     if (isTrue(isGreaterThan(origclientorderidlistLength, 0)))
                     {
-                        query = add(add(add(add(query, "&"), "origclientorderidlist=%5B"), String.Join("%2C", ((IList<object>)origclientorderidlist).ToArray())), "%5D");
+                        // wrap clientOrderids around ""
+                        object newClientOrderIds = new List<object>() {};
+                        for (object i = 0; isLessThan(i, origclientorderidlistLength); postFixIncrement(ref i))
+                        {
+                            ((IList<object>)newClientOrderIds).Add(add(add("%22", getValue(origclientorderidlist, i)), "%22"));
+                        }
+                        query = add(add(add(add(query, "&"), "origclientorderidlist=%5B"), String.Join("%2C", ((IList<object>)newClientOrderIds).ToArray())), "%5D");
                     }
                 } else
                 {
@@ -14011,6 +14081,7 @@ public partial class binance : Exchange
             { "contracts", this.safeNumber(liquidation, "executedQty") },
             { "contractSize", this.safeNumber(market, "contractSize") },
             { "price", this.safeNumber(liquidation, "avgPrice") },
+            { "side", this.safeStringLower(liquidation, "side") },
             { "baseValue", this.safeNumber(liquidation, "cumBase") },
             { "quoteValue", this.safeNumber(liquidation, "cumQuote") },
             { "timestamp", timestamp },

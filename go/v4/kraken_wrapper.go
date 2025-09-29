@@ -1133,7 +1133,7 @@ func (this *Kraken) FetchDepositAddress(code string, options ...FetchDepositAddr
  * @see https://docs.kraken.com/rest/#tag/Funding/operation/withdrawFunds
  * @param {string} code unified currency code
  * @param {float} amount the amount to withdraw
- * @param {string} address the address to withdraw to
+ * @param {string} address the address to withdraw to, not required can be '' or undefined/none/null
  * @param {string} tag
  * @param {object} [params] extra parameters specific to the exchange API endpoint
  * @returns {object} a [transaction structure]{@link https://docs.ccxt.com/#/?id=transaction-structure}
@@ -1257,6 +1257,9 @@ func (this *Kraken) Transfer(code string, amount float64, fromAccount string, to
 
 // missing typed methods from base
 // nolint
+func (this *Kraken) LoadMarkets(params ...interface{}) (map[string]MarketInterface, error) {
+	return this.exchangeTyped.LoadMarkets(params...)
+}
 func (this *Kraken) CancelOrdersForSymbols(orders []CancellationRequest, options ...CancelOrdersForSymbolsOptions) ([]Order, error) {
 	return this.exchangeTyped.CancelOrdersForSymbols(orders, options...)
 }
