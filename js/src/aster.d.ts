@@ -1,5 +1,5 @@
 import Exchange from './abstract/aster.js';
-import type { Balances, Currencies, Currency, Dict, FundingRate, FundingRateHistory, FundingRates, int, Int, LedgerEntry, Leverage, Leverages, LeverageTiers, MarginMode, MarginModes, MarginModification, Market, Num, OHLCV, Order, OrderBook, OrderRequest, OrderSide, OrderType, Position, Str, Strings, Ticker, Tickers, Trade, TradingFeeInterface } from './base/types.js';
+import type { Balances, Currencies, Currency, Dict, FundingRate, FundingRateHistory, FundingRates, int, Int, LedgerEntry, Leverage, Leverages, LeverageTier, LeverageTiers, MarginMode, MarginModes, MarginModification, Market, Num, OHLCV, Order, OrderBook, OrderRequest, OrderSide, OrderType, Position, Str, Strings, Ticker, Tickers, Trade, TradingFeeInterface } from './base/types.js';
 /**
  * @class aster
  * @augments Exchange
@@ -513,6 +513,7 @@ export default class aster extends Exchange {
      */
     fetchLeverageTiers(symbols?: Strings, params?: {}): Promise<LeverageTiers>;
     loadLeverageBrackets(reload?: boolean, params?: {}): Promise<any>;
+    parseMarketLeverageTiers(info: any, market?: Market): LeverageTier[];
     parseAccountPositions(account: any, filterClosed?: boolean): any[];
     parseAccountPosition(position: any, market?: Market): {
         info: any;

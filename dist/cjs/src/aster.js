@@ -2767,13 +2767,14 @@ class aster extends aster$1["default"] {
         // TODO: Unfinished - trying to make API to output something useful
         await this.loadMarkets();
         // let type = undefined;
-        [, params] = this.handleMarketTypeAndParams('fetchLeverageTiers', undefined, params);
+        let _ = undefined;
+        [_, params] = this.handleMarketTypeAndParams('fetchLeverageTiers', undefined, params);
         // let subType = undefined;
-        [, params] = this.handleSubTypeAndParams('fetchLeverageTiers', undefined, params, 'linear');
+        [_, params] = this.handleSubTypeAndParams('fetchLeverageTiers', undefined, params, 'linear');
         // let isPortfolioMargin = undefined;
-        [, params] = this.handleOptionAndParams2(params, 'fetchLeverageTiers', 'papi', 'portfolioMargin', false);
+        [_, params] = this.handleOptionAndParams2(params, 'fetchLeverageTiers', 'papi', 'portfolioMargin', false);
         const response = await this.privateGetFapiV1LeverageBracket(params);
-        return response;
+        return this.parseLeverageTiers(response, symbols, 'symbol');
         // if (this.isLinear (type, subType)) {
         //     if (isPortfolioMargin) {
         //         response = await this.papiGetUmLeverageBracket (params);
@@ -2821,6 +2822,48 @@ class aster extends aster$1["default"] {
             }
         }
         return this.options['leverageBrackets'];
+    }
+    parseMarketLeverageTiers(info, market = undefined) {
+        /**
+         * @ignore
+         * @method
+         * @param {object} info Exchange response for 1 market
+         * @param {object} market CCXT market
+         */
+        //
+        //    {
+        //        "symbol": "SUSHIUSDT",
+        //        "brackets": [
+        //            {
+        //                "bracket": 1,
+        //                "initialLeverage": 50,
+        //                "notionalCap": 50000,
+        //                "notionalFloor": 0,
+        //                "maintMarginRatio": 0.01,
+        //                "cum": 0.0
+        //            },
+        //            ...
+        //        ]
+        //    }
+        //
+        const marketId = this.safeString(info, 'symbol');
+        market = this.safeMarket(marketId, market, undefined, 'contract');
+        const brackets = this.safeList(info, 'brackets', []);
+        const tiers = [];
+        for (let j = 0; j < brackets.length; j++) {
+            const bracket = brackets[j];
+            tiers.push({
+                'tier': this.safeNumber(bracket, 'bracket'),
+                'symbol': this.safeSymbol(marketId, market),
+                'currency': market['quote'],
+                'minNotional': this.safeNumber2(bracket, 'notionalFloor', 'qtyFloor'),
+                'maxNotional': this.safeNumber2(bracket, 'notionalCap', 'qtyCap'),
+                'maintenanceMarginRate': this.safeNumber(bracket, 'maintMarginRatio'),
+                'maxLeverage': this.safeNumber(bracket, 'initialLeverage'),
+                'info': bracket,
+            });
+        }
+        return tiers;
     }
     parseAccountPositions(account, filterClosed = false) {
         const positions = this.safeList(account, 'positions');

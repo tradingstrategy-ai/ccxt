@@ -2680,13 +2680,14 @@ class aster(Exchange, ImplicitAPI):
         # TODO: Unfinished - trying to make API to output something useful
         await self.load_markets()
         # type = None
-        , params = self.handle_market_type_and_params('fetchLeverageTiers', None, params)
+        _ = None
+        _, params = self.handle_market_type_and_params('fetchLeverageTiers', None, params)
         # subType = None
-        , params = self.handle_sub_type_and_params('fetchLeverageTiers', None, params, 'linear')
+        _, params = self.handle_sub_type_and_params('fetchLeverageTiers', None, params, 'linear')
         # isPortfolioMargin = None
-        , params = self.handle_option_and_params_2(params, 'fetchLeverageTiers', 'papi', 'portfolioMargin', False)
+        _, params = self.handle_option_and_params_2(params, 'fetchLeverageTiers', 'papi', 'portfolioMargin', False)
         response = await self.privateGetFapiV1LeverageBracket(params)
-        return response
+        return self.parse_leverage_tiers(response, symbols, 'symbol')
         # if self.is_linear(type, subType):
         #     if isPortfolioMargin:
         #         response = await self.papiGetUmLeverageBracket(params)
@@ -2731,6 +2732,46 @@ class aster(Exchange, ImplicitAPI):
                     result.append([floorValue, maintenanceMarginPercentage])
                 self.options['leverageBrackets'][symbol] = result
         return self.options['leverageBrackets']
+
+    def parse_market_leverage_tiers(self, info, market: Market = None) -> List[LeverageTier]:
+        """
+ @ignore
+        :param dict info: Exchange response for 1 market
+        :param dict market: CCXT market
+        """
+        #
+        #    {
+        #        "symbol": "SUSHIUSDT",
+        #        "brackets": [
+        #            {
+        #                "bracket": 1,
+        #                "initialLeverage": 50,
+        #                "notionalCap": 50000,
+        #                "notionalFloor": 0,
+        #                "maintMarginRatio": 0.01,
+        #                "cum": 0.0
+        #            },
+        #            ...
+        #        ]
+        #    }
+        #
+        marketId = self.safe_string(info, 'symbol')
+        market = self.safe_market(marketId, market, None, 'contract')
+        brackets = self.safe_list(info, 'brackets', [])
+        tiers = []
+        for j in range(0, len(brackets)):
+            bracket = brackets[j]
+            tiers.append({
+                'tier': self.safe_number(bracket, 'bracket'),
+                'symbol': self.safe_symbol(marketId, market),
+                'currency': market['quote'],
+                'minNotional': self.safe_number_2(bracket, 'notionalFloor', 'qtyFloor'),
+                'maxNotional': self.safe_number_2(bracket, 'notionalCap', 'qtyCap'),
+                'maintenanceMarginRate': self.safe_number(bracket, 'maintMarginRatio'),
+                'maxLeverage': self.safe_number(bracket, 'initialLeverage'),
+                'info': bracket,
+            })
+        return tiers
 
     def parse_account_positions(self, account, filterClosed=False):
         positions = self.safe_list(account, 'positions')

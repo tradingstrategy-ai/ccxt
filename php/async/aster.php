@@ -2883,13 +2883,14 @@ class aster extends Exchange {
             // TODO => Unfinished - trying to make API to output something useful
             Async\await($this->load_markets());
             // $type = null;
-            list(, $params) = $this->handle_market_type_and_params('fetchLeverageTiers', null, $params);
+            $_ = null;
+            list($_, $params) = $this->handle_market_type_and_params('fetchLeverageTiers', null, $params);
             // $subType = null;
-            list(, $params) = $this->handle_sub_type_and_params('fetchLeverageTiers', null, $params, 'linear');
+            list($_, $params) = $this->handle_sub_type_and_params('fetchLeverageTiers', null, $params, 'linear');
             // $isPortfolioMargin = null;
-            list(, $params) = $this->handle_option_and_params_2($params, 'fetchLeverageTiers', 'papi', 'portfolioMargin', false);
+            list($_, $params) = $this->handle_option_and_params_2($params, 'fetchLeverageTiers', 'papi', 'portfolioMargin', false);
             $response = Async\await($this->privateGetFapiV1LeverageBracket ($params));
-            return $response;
+            return $this->parse_leverage_tiers($response, $symbols, 'symbol');
             // if ($this->is_linear($type, $subType)) {
             //     if ($isPortfolioMargin) {
             //         $response = Async\await($this->papiGetUmLeverageBracket ($params));
@@ -2941,6 +2942,48 @@ class aster extends Exchange {
             }
             return $this->options['leverageBrackets'];
         }) ();
+    }
+
+    public function parse_market_leverage_tiers($info, ?array $market = null): array {
+        /**
+         * @ignore
+         * @param {array} $info Exchange response for 1 $market
+         * @param {array} $market CCXT $market
+         */
+        //
+        //    {
+        //        "symbol" => "SUSHIUSDT",
+        //        "brackets" => array(
+        //            array(
+        //                "bracket" => 1,
+        //                "initialLeverage" => 50,
+        //                "notionalCap" => 50000,
+        //                "notionalFloor" => 0,
+        //                "maintMarginRatio" => 0.01,
+        //                "cum" => 0.0
+        //            ),
+        //            ...
+        //        )
+        //    }
+        //
+        $marketId = $this->safe_string($info, 'symbol');
+        $market = $this->safe_market($marketId, $market, null, 'contract');
+        $brackets = $this->safe_list($info, 'brackets', array());
+        $tiers = array();
+        for ($j = 0; $j < count($brackets); $j++) {
+            $bracket = $brackets[$j];
+            $tiers[] = array(
+                'tier' => $this->safe_number($bracket, 'bracket'),
+                'symbol' => $this->safe_symbol($marketId, $market),
+                'currency' => $market['quote'],
+                'minNotional' => $this->safe_number_2($bracket, 'notionalFloor', 'qtyFloor'),
+                'maxNotional' => $this->safe_number_2($bracket, 'notionalCap', 'qtyCap'),
+                'maintenanceMarginRate' => $this->safe_number($bracket, 'maintMarginRatio'),
+                'maxLeverage' => $this->safe_number($bracket, 'initialLeverage'),
+                'info' => $bracket,
+            );
+        }
+        return $tiers;
     }
 
     public function parse_account_positions($account, $filterClosed = false) {
