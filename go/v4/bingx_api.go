@@ -7,17 +7,12 @@
 
 package ccxt
 
-<<<<<<< HEAD
-func (this *bingx) SpotV1PublicGetServerTime (args ...interface{}) <-chan interface{} {
-   return this.callEndpointAsync("spotV1PublicGetServerTime", args...)
-=======
-func (this *bingx) FundV1PrivateGetAccountBalance(args ...interface{}) <-chan interface{} {
-	return this.callEndpointAsync("fundV1PrivateGetAccountBalance", args...)
+func (this *bingx) FundV1PrivateGetAccountBalance (args ...interface{}) <-chan interface{} {
+   return this.callEndpointAsync("fundV1PrivateGetAccountBalance", args...)
 }
 
-func (this *bingx) SpotV1PublicGetServerTime(args ...interface{}) <-chan interface{} {
-	return this.callEndpointAsync("spotV1PublicGetServerTime", args...)
->>>>>>> master
+func (this *bingx) SpotV1PublicGetServerTime (args ...interface{}) <-chan interface{} {
+   return this.callEndpointAsync("spotV1PublicGetServerTime", args...)
 }
 
 func (this *bingx) SpotV1PublicGetCommonSymbols (args ...interface{}) <-chan interface{} {

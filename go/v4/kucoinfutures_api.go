@@ -859,17 +859,12 @@ func (this *kucoinfutures) FuturesPrivatePostPositionChangeMarginMode (args ...i
    return this.callEndpointAsync("futuresPrivatePostPositionChangeMarginMode", args...)
 }
 
-<<<<<<< HEAD
-func (this *kucoinfutures) FuturesPrivateDeleteOrdersOrderId (args ...interface{}) <-chan interface{} {
-   return this.callEndpointAsync("futuresPrivateDeleteOrdersOrderId", args...)
-=======
-func (this *kucoinfutures) FuturesPrivatePostPositionSwitchPositionMode(args ...interface{}) <-chan interface{} {
-	return this.callEndpointAsync("futuresPrivatePostPositionSwitchPositionMode", args...)
+func (this *kucoinfutures) FuturesPrivatePostPositionSwitchPositionMode (args ...interface{}) <-chan interface{} {
+   return this.callEndpointAsync("futuresPrivatePostPositionSwitchPositionMode", args...)
 }
 
-func (this *kucoinfutures) FuturesPrivateDeleteOrdersOrderId(args ...interface{}) <-chan interface{} {
-	return this.callEndpointAsync("futuresPrivateDeleteOrdersOrderId", args...)
->>>>>>> master
+func (this *kucoinfutures) FuturesPrivateDeleteOrdersOrderId (args ...interface{}) <-chan interface{} {
+   return this.callEndpointAsync("futuresPrivateDeleteOrdersOrderId", args...)
 }
 
 func (this *kucoinfutures) FuturesPrivateDeleteOrdersClientOrderClientOid (args ...interface{}) <-chan interface{} {

@@ -341,11 +341,8 @@ class Exchange {
         'alpaca',
         'apex',
         'ascendex',
-<<<<<<< HEAD
         'aster',
-=======
         'backpack',
->>>>>>> master
         'bequant',
         'bigone',
         'binance',

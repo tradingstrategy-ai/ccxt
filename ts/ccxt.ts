@@ -49,11 +49,8 @@ const version = '4.5.5';
 import alpaca from  './src/alpaca.js'
 import apex from  './src/apex.js'
 import ascendex from  './src/ascendex.js'
-<<<<<<< HEAD
 import aster from  './src/aster.js'
-=======
 import backpack from  './src/backpack.js'
->>>>>>> master
 import bequant from  './src/bequant.js'
 import bigone from  './src/bigone.js'
 import binance from  './src/binance.js'
@@ -162,11 +159,8 @@ import zonda from  './src/zonda.js'
 import alpacaPro from  './src/pro/alpaca.js'
 import apexPro from  './src/pro/apex.js'
 import ascendexPro from  './src/pro/ascendex.js'
-<<<<<<< HEAD
 import asterPro from  './src/pro/aster.js'
-=======
 import backpackPro from  './src/pro/backpack.js'
->>>>>>> master
 import bequantPro from  './src/pro/bequant.js'
 import binancePro from  './src/pro/binance.js'
 import binancecoinmPro from  './src/pro/binancecoinm.js'
@@ -241,11 +235,8 @@ const exchanges = {
     'alpaca':                 alpaca,
     'apex':                   apex,
     'ascendex':               ascendex,
-<<<<<<< HEAD
     'aster':                  aster,
-=======
     'backpack':               backpack,
->>>>>>> master
     'bequant':                bequant,
     'bigone':                 bigone,
     'binance':                binance,
@@ -354,11 +345,8 @@ const pro = {
     'alpaca':                 alpacaPro,
     'apex':                   apexPro,
     'ascendex':               ascendexPro,
-<<<<<<< HEAD
     'aster':                  asterPro,
-=======
     'backpack':               backpackPro,
->>>>>>> master
     'bequant':                bequantPro,
     'binance':                binancePro,
     'binancecoinm':           binancecoinmPro,
@@ -575,11 +563,8 @@ export {
     alpaca,
     apex,
     ascendex,
-<<<<<<< HEAD
     aster,
-=======
     backpack,
->>>>>>> master
     bequant,
     bigone,
     binance,

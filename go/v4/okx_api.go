@@ -83,17 +83,12 @@ func (this *okx) PublicGetMarketIndexComponents (args ...interface{}) <-chan int
    return this.callEndpointAsync("publicGetMarketIndexComponents", args...)
 }
 
-<<<<<<< HEAD
-func (this *okx) PublicGetPublicEconomicCalendar (args ...interface{}) <-chan interface{} {
-   return this.callEndpointAsync("publicGetPublicEconomicCalendar", args...)
-=======
-func (this *okx) PublicGetPublicMarketDataHistory(args ...interface{}) <-chan interface{} {
-	return this.callEndpointAsync("publicGetPublicMarketDataHistory", args...)
+func (this *okx) PublicGetPublicMarketDataHistory (args ...interface{}) <-chan interface{} {
+   return this.callEndpointAsync("publicGetPublicMarketDataHistory", args...)
 }
 
-func (this *okx) PublicGetPublicEconomicCalendar(args ...interface{}) <-chan interface{} {
-	return this.callEndpointAsync("publicGetPublicEconomicCalendar", args...)
->>>>>>> master
+func (this *okx) PublicGetPublicEconomicCalendar (args ...interface{}) <-chan interface{} {
+   return this.callEndpointAsync("publicGetPublicEconomicCalendar", args...)
 }
 
 func (this *okx) PublicGetMarketBlockTickers (args ...interface{}) <-chan interface{} {
@@ -1152,17 +1147,12 @@ func (this *okx) PrivatePostAccountMovePositions (args ...interface{}) <-chan in
    return this.callEndpointAsync("privatePostAccountMovePositions", args...)
 }
 
-<<<<<<< HEAD
-func (this *okx) PrivatePostUsersSubaccountModifyApikey (args ...interface{}) <-chan interface{} {
-   return this.callEndpointAsync("privatePostUsersSubaccountModifyApikey", args...)
-=======
-func (this *okx) PrivatePostAccountSetSettleCurrency(args ...interface{}) <-chan interface{} {
-	return this.callEndpointAsync("privatePostAccountSetSettleCurrency", args...)
+func (this *okx) PrivatePostAccountSetSettleCurrency (args ...interface{}) <-chan interface{} {
+   return this.callEndpointAsync("privatePostAccountSetSettleCurrency", args...)
 }
 
-func (this *okx) PrivatePostUsersSubaccountModifyApikey(args ...interface{}) <-chan interface{} {
-	return this.callEndpointAsync("privatePostUsersSubaccountModifyApikey", args...)
->>>>>>> master
+func (this *okx) PrivatePostUsersSubaccountModifyApikey (args ...interface{}) <-chan interface{} {
+   return this.callEndpointAsync("privatePostUsersSubaccountModifyApikey", args...)
 }
 
 func (this *okx) PrivatePostAssetSubaccountTransfer (args ...interface{}) <-chan interface{} {
