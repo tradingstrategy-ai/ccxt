@@ -432,7 +432,7 @@ export default class aster extends Exchange {
         unrealizedPnl: number;
         leverage: number;
         liquidationPrice: number;
-        collateral: number;
+        collateral: any;
         notional: any;
         markPrice: number;
         entryPrice: number;

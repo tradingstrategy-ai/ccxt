@@ -2513,8 +2513,21 @@ class aster(Exchange, ImplicitAPI):
         side = self.safe_string_lower(position, 'positionSide')
         entryPriceString = self.safe_string(position, 'entryPrice')
         entryPrice = self.parse_number(entryPriceString)
-        collateralString = self.safe_string(position, 'isolatedMargin')
-        collateral = self.parse_number(collateralString)
+        isolatedMargin = self.safe_string(position, 'isolatedMargin')
+        isCrossMargin = marginMode == 'cross' or not isolatedMargin or isolatedMargin == '0'
+        collateral = None
+        if not isCrossMargin:
+            # Isolated margin: use isolatedMargin directly
+            collateral = self.parse_number(isolatedMargin)
+        else:
+            # Cross margin: try initialMargin from API, then calculate
+            initialMargin = self.safe_string(position, 'initialMargin')
+            if initialMargin and initialMargin != '0':
+                collateral = self.parse_number(initialMargin)
+            else:
+                # Calculate initial margin requirement: position_value / leverage
+                leverage = self.safe_number(position, 'leverage', 1)
+                collateral = (contracts * entryPrice) / leverage if (leverage and contracts and entryPrice) else 0
         markPrice = self.parse_number(self.omit_zero(self.safe_string(position, 'markPrice')))
         timestamp = self.safe_integer(position, 'updateTime')
         positionSide = self.safe_string(position, 'positionSide')
