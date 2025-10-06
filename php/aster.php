@@ -2617,8 +2617,23 @@ class aster extends Exchange {
         $side = $this->safe_string_lower($position, 'positionSide');
         $entryPriceString = $this->safe_string($position, 'entryPrice');
         $entryPrice = $this->parse_number($entryPriceString);
-        $collateralString = $this->safe_string($position, 'isolatedMargin');
-        $collateral = $this->parse_number($collateralString);
+        $isolatedMargin = $this->safe_string($position, 'isolatedMargin');
+        $isCrossMargin = $marginMode === 'cross' || !$isolatedMargin || $isolatedMargin === '0';
+        $collateral = null;
+        if (!$isCrossMargin) {
+            // Isolated margin => use $isolatedMargin directly
+            $collateral = $this->parse_number($isolatedMargin);
+        } else {
+            // Cross margin => try $initialMargin from API, then calculate
+            $initialMargin = $this->safe_string($position, 'initialMargin');
+            if ($initialMargin && $initialMargin !== '0') {
+                $collateral = $this->parse_number($initialMargin);
+            } else {
+                // Calculate initial margin requirement => position_value / $leverage
+                $leverage = $this->safe_number($position, 'leverage', 1);
+                $collateral = ($leverage && $contracts && $entryPrice) ? ($contracts * $entryPrice) / $leverage : 0;
+            }
+        }
         $markPrice = $this->parse_number($this->omit_zero($this->safe_string($position, 'markPrice')));
         $timestamp = $this->safe_integer($position, 'updateTime');
         $positionSide = $this->safe_string($position, 'positionSide');

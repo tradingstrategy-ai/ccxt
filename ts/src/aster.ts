@@ -1890,7 +1890,7 @@ export default class aster extends Exchange {
         /**
          * @method
          * @ignore
-         * @name binance#createOrderRequest
+        * @name aster#createOrderRequest
          * @description helper function to build the request
          * @param {string} symbol unified symbol of the market to create an order in
          * @param {string} type 'market' or 'limit'
@@ -2622,8 +2622,23 @@ export default class aster extends Exchange {
         const side = this.safeStringLower (position, 'positionSide');
         const entryPriceString = this.safeString (position, 'entryPrice');
         const entryPrice = this.parseNumber (entryPriceString);
-        const collateralString = this.safeString (position, 'isolatedMargin');
-        const collateral = this.parseNumber (collateralString);
+        const isolatedMargin = this.safeString (position, 'isolatedMargin');
+        const isCrossMargin = marginMode === 'cross' || !isolatedMargin || isolatedMargin === '0';
+        let collateral = undefined;
+        if (!isCrossMargin) {
+            // Isolated margin: use isolatedMargin directly
+            collateral = this.parseNumber (isolatedMargin);
+        } else {
+            // Cross margin: try initialMargin from API, then calculate
+            const initialMargin = this.safeString (position, 'initialMargin');
+            if (initialMargin && initialMargin !== '0') {
+                collateral = this.parseNumber (initialMargin);
+            } else {
+                // Calculate initial margin requirement: position_value / leverage
+                const leverage = this.safeNumber (position, 'leverage', 1);
+                collateral = (leverage && contracts && entryPrice) ? (contracts * entryPrice) / leverage : 0;
+            }
+        }
         const markPrice = this.parseNumber (this.omitZero (this.safeString (position, 'markPrice')));
         const timestamp = this.safeInteger (position, 'updateTime');
         const positionSide = this.safeString (position, 'positionSide');
@@ -2709,7 +2724,7 @@ export default class aster extends Exchange {
 
     /**
      * @method
-     * @name binance#fetchPositions
+     * @name aster#fetchPositions
      * @description fetch all open positions
      * @see https://developers.binance.com/docs/derivatives/usds-margined-futures/account/rest-api/Account-Information-V2
      * @see https://developers.binance.com/docs/derivatives/coin-margined-futures/account/rest-api/Account-Information
@@ -2745,7 +2760,7 @@ export default class aster extends Exchange {
 
     /**
      * @method
-     * @name binance#fetchAccountPositions
+     * @name aster#fetchAccountPositions
      * @ignore
      * @description fetch account positions
      * @see https://developers.binance.com/docs/derivatives/usds-margined-futures/account/rest-api/Account-Information-V2
@@ -2786,7 +2801,7 @@ export default class aster extends Exchange {
 
     /**
      * @method
-     * @name binance#fetchLeverageTiers
+     * @name aster#fetchLeverageTiers
      * @description retrieve information on the maximum leverage, and maintenance margin for trades of varying trade sizes
      * @see https://developers.binance.com/docs/derivatives/usds-margined-futures/account/rest-api/Notional-and-Leverage-Brackets
      * @see https://developers.binance.com/docs/derivatives/coin-margined-futures/account/rest-api/Notional-Bracket-for-Pair

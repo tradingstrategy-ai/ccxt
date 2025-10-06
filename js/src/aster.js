@@ -2589,8 +2589,25 @@ export default class aster extends Exchange {
         const side = this.safeStringLower(position, 'positionSide');
         const entryPriceString = this.safeString(position, 'entryPrice');
         const entryPrice = this.parseNumber(entryPriceString);
-        const collateralString = this.safeString(position, 'isolatedMargin');
-        const collateral = this.parseNumber(collateralString);
+        const isolatedMargin = this.safeString(position, 'isolatedMargin');
+        const isCrossMargin = marginMode === 'cross' || !isolatedMargin || isolatedMargin === '0';
+        let collateral = undefined;
+        if (!isCrossMargin) {
+            // Isolated margin: use isolatedMargin directly
+            collateral = this.parseNumber(isolatedMargin);
+        }
+        else {
+            // Cross margin: try initialMargin from API, then calculate
+            const initialMargin = this.safeString(position, 'initialMargin');
+            if (initialMargin && initialMargin !== '0') {
+                collateral = this.parseNumber(initialMargin);
+            }
+            else {
+                // Calculate initial margin requirement: position_value / leverage
+                const leverage = this.safeNumber(position, 'leverage', 1);
+                collateral = (leverage && contracts && entryPrice) ? (contracts * entryPrice) / leverage : 0;
+            }
+        }
         const markPrice = this.parseNumber(this.omitZero(this.safeString(position, 'markPrice')));
         const timestamp = this.safeInteger(position, 'updateTime');
         const positionSide = this.safeString(position, 'positionSide');
