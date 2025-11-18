@@ -36,6 +36,9 @@ from ccxt.base.errors import BadResponse
 from ccxt.base.decimal_to_precision import TICK_SIZE
 from ccxt.base.precise import Precise
 
+import logging
+
+logger = logging.getLogger('ccxt.base.exchange')
 
 class aster(Exchange, ImplicitAPI):
 
@@ -1307,15 +1310,7 @@ class aster(Exchange, ImplicitAPI):
             code = self.safe_currency_code(currencyId)
             account = self.account()
             account['free'] = self.safe_string(balance, 'availableBalance')
-            account['total'] = self.safe_string(balance, 'crossWalletBalance') # changed from self.safe_string(balance, 'balance')
-            # Skip assets with zero or negative crossWalletBalance. This was causing misalignements in the /balance endpoint
-            # These are either empty wallets or virtual accounting entries
-            cross_wallet_float = float(cross_wallet or 0)
-            if cross_wallet_float <= 0:
-                continue
-            # Map USDF to USDT since they're equivalent and Freqtrade config expects USDT as stake currency
-            if currencyId == 'USDF':
-                currencyId = 'USDT'
+            account['total'] = self.safe_string(balance, 'crossWalletBalance')
             result[code] = account
         return self.safe_balance(result)
 
@@ -1329,6 +1324,7 @@ class aster(Exchange, ImplicitAPI):
         :returns dict: a `balance structure <https://docs.ccxt.com/#/?id=balance-structure>`
         """
         response = self.privateGetFapiV2Balance(params)
+        logger.info(f"Fetch balance response: {response}")
         #
         #     [
         #         {
