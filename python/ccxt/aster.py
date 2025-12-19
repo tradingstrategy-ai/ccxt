@@ -1873,6 +1873,9 @@ class aster(Exchange, ImplicitAPI):
             triggerPriceIsRequired = True
         elif (uppercaseType == 'STOP_MARKET') or (uppercaseType == 'TAKE_PROFIT_MARKET'):
             triggerPriceIsRequired = True
+            closePosition = self.safe_bool(params, 'closePosition', False)
+            if not closePosition:
+                quantityIsRequired = True
         elif uppercaseType == 'TRAILING_STOP_MARKET':
             trailingPercent = self.safe_string_n(params, ['trailingPercent', 'callbackRate', 'trailingDelta'])
             trailingTriggerPrice = self.safe_string_2(params, 'trailingTriggerPrice', 'activationPrice')
