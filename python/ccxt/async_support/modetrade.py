@@ -102,7 +102,7 @@ class modetrade(Exchange, ImplicitAPI):
                 'fetchPositions': True,
                 'fetchPremiumIndexOHLCV': False,
                 'fetchStatus': True,
-                'fetchTicker': False,
+                'fetchTicker': True,
                 'fetchTickers': False,
                 'fetchTime': True,
                 'fetchTrades': True,
@@ -791,6 +791,53 @@ class modetrade(Exchange, ImplicitAPI):
             'info': trade,
         }, market)
 
+    def parse_ticker(self, ticker: dict, market: Market = None) -> Any:
+        response = ticker if isinstance(ticker, dict) else {}
+        data = self.safe_dict(response, 'data', response)
+        marketId = self.safe_string(data, 'symbol')
+        market = self.safe_market(marketId, market)
+        symbol = market['symbol']
+        timestamp = self.safe_integer(response, 'timestamp')
+
+        last = self.safe_number(data, '24h_close')
+        markPrice = self.safe_number(data, 'mark_price')
+        indexPrice = self.safe_number(data, 'index_price')
+        open = self.safe_number(data, '24h_open')
+        high = self.safe_number(data, '24h_high')
+        low = self.safe_number(data, '24h_low')
+        close = self.safe_number(data, '24h_close')
+        baseVolume = self.safe_number(data, '24h_volume')
+        quoteVolume = self.safe_number(data, '24h_amount')
+
+        info = response
+        if markPrice is not None or indexPrice is not None:
+            info = self.extend({}, response)
+            info['mark_price'] = markPrice
+            info['index_price'] = indexPrice
+
+        return self.safe_ticker({
+            'symbol': symbol,
+            'timestamp': timestamp,
+            'datetime': self.iso8601(timestamp),
+            'high': high,
+            'low': low,
+            'bid': None,
+            'bidVolume': None,
+            'ask': None,
+            'askVolume': None,
+            'vwap': None,
+            'open': open,
+            'close': close,
+            'last': last,
+            'previousClose': None,
+            'change': None,
+            'percentage': None,
+            'average': None,
+            'baseVolume': baseVolume,
+            'quoteVolume': quoteVolume,
+            'info': info,
+        }, market)
+
     async def fetch_trades(self, symbol: str, since: Int = None, limit: Int = None, params={}) -> List[Trade]:
         """
         get the list of most recent trades for a particular symbol
@@ -829,6 +876,24 @@ class modetrade(Exchange, ImplicitAPI):
         data = self.safe_dict(response, 'data', {})
         rows = self.safe_list(data, 'rows', [])
         return self.parse_trades(rows, market, since, limit)
+
+    async def fetch_ticker(self, symbol: str, params={}) -> Any:
+        """
+        fetches a price ticker for a market (synthetic from Orderly public futures endpoint)
+
+        https://orderly.network/docs/build-on-evm/evm-api/restful-api/public/get-one-futures
+
+        :param str symbol: unified symbol of the market to fetch the ticker for
+        :param dict [params]: extra parameters specific to the exchange API endpoint
+        :returns dict: a `ticker structure <https://docs.ccxt.com/#/?id=ticker-structure>`
+        """
+        await self.load_markets()
+        market = self.market(symbol)
+        request: dict = {
+            'symbol': market['id'],
+        }
+        response = await self.v1PublicGetPublicFuturesSymbol(self.extend(request, params))
+        return self.parse_ticker(response, market)
 
     def parse_funding_rate(self, fundingRate, market: Market = None) -> FundingRate:
         #
