@@ -2215,48 +2215,58 @@ class modetrade(Exchange, ImplicitAPI):
         trades = self.safe_list(data, 'rows', [])
         return self.parse_trades(trades, market, since, limit, params)
 
-    def parse_balance(self, response) -> Balances:
-        result: dict = {
-            'info': response,
-        }
-        balances = self.safe_list(response, 'holding', [])
-        for i in range(0, len(balances)):
-            balance = balances[i]
-            code = self.safe_currency_code(self.safe_string(balance, 'token'))
-            account = self.account()
-            account['total'] = self.safe_string(balance, 'holding')
-            account['used'] = self.safe_string(balance, 'frozen')
-            result[code] = account
-        return self.safe_balance(result)
-
     def fetch_balance(self, params={}) -> Balances:
         """
         query for balance and get the amount of funds available for trading or funds locked in orders
+        
+        https://orderly.network/docs/build-on-evm/evm-api/restful-api/private/get-positions
+        
+        IMPORTANT: Uses /v1/positions endpoint (not /v1/client/holding)
+        
+        WHY: /v1/client/holding only returns raw token balances and does NOT account for:
+        - Margin locked in open positions
+        - Unsettled PnL from closed positions
+        
+        Example responses:
+        
+        /v1/client/holding returns:
+        {
+        "holding": [{"token": "USDC", "holding": 220.18, "frozen": 0.0}]
+        }
+        Problem: This example shows 220.18 USDC available, but ignores 118.72 USDC locked in BTC position
+        
+        /v1/positions returns:
+        Example response from /v1/positions:
+        {
+            "success": true,
+            "data": {
+            "margin_ratio": 1.7601,
+            "initial_margin_ratio": 1.0,
+            "maintenance_margin_ratio": 0.006,
+            "open_margin_ratio": 1.7601,
+            "current_margin_ratio_with_orders": 1.7601,
+            "initial_margin_ratio_with_orders": 1.0,
+            "maintenance_margin_ratio_with_orders": 0.006,
+            "total_collateral_value": 208.64,  # Adjusted for unsettled PnL
+            "free_collateral": 90.10,  # Actually available for trading
+            "total_pnl_24_h": 0.297,
+            "rows": [...]  # Array of position details
+            }
+        }
 
-        https://orderly.network/docs/build-on-evm/evm-api/restful-api/private/get-current-holding
-
-        :param dict [params]: extra parameters specific to the exchange API endpoint
-        :returns dict: a `balance structure <https://docs.ccxt.com/#/?id=balance-structure>`
+        Result: Correctly shows only 89.73 USDC available (208.45 total - 118.72 locked)
+        
+        This matches how Binance, Hyperliquid, and Aster work.
         """
         self.load_markets()
-        response = self.v1PrivateGetClientHolding(params)
-        #
-        # {
-        #     "success": True,
-        #     "timestamp": 1702989203989,
-        #     "data": {
-        #       "holding": [{
-        #         "updated_time": 1580794149000,
-        #         "token": "BTC",
-        #         "holding": -28.000752,
-        #         "frozen": 123,
-        #         "pending_short": -2000
-        #       }]
-        #     }
-        # }
-        #
-        data = self.safe_dict(response, 'data')
-        return self.parse_balance(data)
+        response = self.v1PrivateGetPositions(params)
+        data = self.safe_dict(response, 'data', {})
+        result: dict = {'info': response}
+        account = self.account()
+        account['total'] = self.safe_string(data, 'total_collateral_value')
+        account['free'] = self.safe_string(data, 'free_collateral')
+        result['USDC'] = account
+        return self.safe_balance(result)
 
     def get_asset_history_rows(self, code: Str = None, since: Int = None, limit: Int = None, params={}) -> Any:
         self.load_markets()
