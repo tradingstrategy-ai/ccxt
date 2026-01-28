@@ -130,7 +130,8 @@ class Exchange(BaseExchange):
 
         if self.own_session and self.session is None:
             # Pass this SSL context to aiohttp and create a TCPConnector
-            self.tcp_connector = aiohttp.TCPConnector(ssl=self.ssl_context, loop=self.asyncio_loop, enable_cleanup_closed=True)
+            local_addr = self.options.get('local_addr', None)
+            self.tcp_connector = aiohttp.TCPConnector(ssl=self.ssl_context, loop=self.asyncio_loop, enable_cleanup_closed=True, local_addr=local_addr)
             self.session = aiohttp.ClientSession(loop=self.asyncio_loop, connector=self.tcp_connector, trust_env=self.aiohttp_trust_env)
 
     async def close(self):
