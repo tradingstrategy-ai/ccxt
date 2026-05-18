@@ -618,6 +618,7 @@ class aster(Exchange, ImplicitAPI):
         #
         fees = self.fees
         result = []
+        skipped_malformed = 0
         for i in range(0, len(markets)):
             market = markets[i]
             id = self.safe_string(market, 'symbol')
@@ -627,6 +628,19 @@ class aster(Exchange, ImplicitAPI):
             base = self.safe_currency_code(baseId)
             quote = self.safe_currency_code(quoteId)
             settle = self.safe_currency_code(settleId)
+            if base is None or quote is None or settle is None:
+                # Aster has been observed returning market entries with missing
+                # baseAsset/quoteAsset/marginAsset. Skipping (with a loud warning)
+                # avoids the str-concatenation TypeError that would otherwise
+                # abort load_markets entirely and take the whole client down.
+                self.logger.warning(
+                    "aster fetch_markets: skipping malformed market entry "
+                    "id=%s baseAsset=%r quoteAsset=%r marginAsset=%r — "
+                    "investigate upstream and remove this skip if Aster has fixed it",
+                    id, baseId, quoteId, settleId,
+                )
+                skipped_malformed += 1
+                continue
             symbol = base + '/' + quote + ':' + settle
             status = self.safe_string(market, 'status')
             active = status == 'TRADING'
@@ -709,6 +723,11 @@ class aster(Exchange, ImplicitAPI):
                 filter = self.safe_dict_2(filtersByType, 'MIN_NOTIONAL', 'NOTIONAL', {})
                 entry['limits']['cost']['min'] = self.safe_number(filter, 'notional')
             result.append(entry)
+        if skipped_malformed > 0:
+            self.logger.warning(
+                "aster fetch_markets: skipped %d/%d malformed market entries (see WARNING lines above)",
+                skipped_malformed, len(markets),
+            )
         return result
 
     async def fetch_time(self, params={}) -> Int:
