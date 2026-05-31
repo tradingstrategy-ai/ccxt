@@ -586,6 +586,7 @@ class hyperliquid(Exchange, ImplicitAPI):
         meta = self.safe_list(first, 'universe', [])
         tokens = self.safe_list(first, 'tokens', [])
         markets = []
+        skipped_malformed = 0
         for i in range(0, len(meta)):
             market = self.safe_dict(meta, i, {})
             index = self.safe_integer(market, 'index')
@@ -610,6 +611,21 @@ class hyperliquid(Exchange, ImplicitAPI):
             quoteId = self.safe_string(quoteTokenInfo, 'name')
             base = self.safe_currency_code(baseName)
             quote = self.safe_currency_code(quoteId)
+            if base is None or quote is None:
+                # Hyperliquid spot universe has been observed returning entries
+                # with a null token `name` (so baseName/quoteId resolve to None
+                # and `base + '/' + quote` would raise TypeError, aborting
+                # load_markets and silently freezing the freqtrade worker).
+                # Skipping (with a loud warning) keeps the client alive on the
+                # remaining markets. Investigate upstream and remove this skip
+                # if Hyperliquid has fixed it.
+                self.logger.warning(
+                    "hyperliquid fetch_spot_markets: skipping malformed spot "
+                    "universe entry index=%s name=%r baseName=%r quoteId=%r",
+                    index, marketName, baseName, quoteId,
+                )
+                skipped_malformed += 1
+                continue
             symbol = base + '/' + quote
             innerBaseTokenInfo = self.safe_dict(baseTokenInfo, 'spec', baseTokenInfo)
             # innerQuoteTokenInfo = self.safe_dict(quoteTokenInfo, 'spec', quoteTokenInfo)
@@ -675,6 +691,12 @@ class hyperliquid(Exchange, ImplicitAPI):
                 'created': None,
                 'info': self.extend(extraData, market),
             }))
+        if skipped_malformed > 0:
+            self.logger.warning(
+                "hyperliquid fetch_spot_markets: skipped %d/%d malformed spot "
+                "universe entries (see WARNING lines above)",
+                skipped_malformed, len(meta),
+            )
         return markets
 
     def parse_market(self, market: dict) -> Market:
