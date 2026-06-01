@@ -614,6 +614,9 @@ export default class hyperliquid extends Exchange {
             const quoteTokenInfo = this.safeDict (tokens, quoteTokenPos, {});
             const baseName = this.safeString (baseTokenInfo, 'name');
             const quoteId = this.safeString (quoteTokenInfo, 'name');
+            if (baseName === undefined || quoteId === undefined) {
+                continue;
+            }
             const base = this.safeCurrencyCode (baseName);
             const quote = this.safeCurrencyCode (quoteId);
             const symbol = base + '/' + quote;

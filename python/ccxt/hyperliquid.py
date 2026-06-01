@@ -608,6 +608,8 @@ class hyperliquid(Exchange, ImplicitAPI):
             quoteTokenInfo = self.safe_dict(tokens, quoteTokenPos, {})
             baseName = self.safe_string(baseTokenInfo, 'name')
             quoteId = self.safe_string(quoteTokenInfo, 'name')
+            if baseName is None or quoteId is None:
+                continue
             base = self.safe_currency_code(baseName)
             quote = self.safe_currency_code(quoteId)
             symbol = base + '/' + quote
