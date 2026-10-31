@@ -6,6 +6,7 @@
 from ccxt.base.exchange import Exchange
 from ccxt.abstract.aster import ImplicitAPI
 import hashlib
+import re
 from ccxt.base.types import Any, Balances, Currencies, Currency, Int, LedgerEntry, Leverage, Leverages, LeverageTier, LeverageTiers, MarginMode, MarginModes, MarginModification, Market, Num, Order, OrderBook, OrderRequest, OrderSide, OrderType, Position, Str, Strings, Ticker, Tickers, FundingRate, FundingRates, Trade, TradingFeeInterface
 from typing import List
 from ccxt.base.errors import ExchangeError
@@ -287,9 +288,11 @@ class aster(Exchange, ImplicitAPI):
                 '1M': '1M',
             },
             'precisionMode': TICK_SIZE,
+            # Either a V3 API wallet (privateKey + walletAddress) or a legacy
+            # V1 HMAC key (apiKey + secret). sign() checks which pair is set.
             'requiredCredentials': {
-                'apiKey': True,
-                'secret': True,
+                'apiKey': False,
+                'secret': False,
             },
             'fees': {
                 'trading': {
@@ -3086,8 +3089,11 @@ class aster(Exchange, ImplicitAPI):
         if api == 'public':
             if params:
                 url += '?' + self.rawencode(params)
+        elif api == 'private' and self.privateKey:
+            return self.sign_v3(path, method, params)
         elif api == 'private':
-            self.check_required_credentials()
+            if not self.apiKey or not self.secret:
+                raise AuthenticationError(self.id + ' private endpoints need either privateKey + walletAddress (V3 API wallet) or apiKey + secret (legacy V1 key)')
             headers = {
                 'X-MBX-APIKEY': self.apiKey,
             }
@@ -3122,6 +3128,75 @@ class aster(Exchange, ImplicitAPI):
                 body = query
                 headers['Content-Type'] = 'application/x-www-form-urlencoded'
         return {'url': url, 'method': method, 'body': body, 'headers': headers}
+
+    def sign_v3(self, path, method='GET', params={}):
+        """
+        Sign a private request with an Aster V3 API wallet.
+
+        Aster stopped issuing V1 HMAC keys on 2026-03-25; new keys are "API
+        wallets" (an EVM address + private key). V3 requests hit the same
+        endpoints under ``fapi/v3/``, drop ``timestamp``/``recvWindow`` and
+        add ``nonce`` (microseconds), ``user`` and ``signer``. The query
+        string is signed as an EIP-712 ``AsterSignTransaction`` message.
+        Backported from upstream ccxt 4.5.91 so the rest of this 4.5.5 fork
+        stays untouched.
+
+        https://asterdex.github.io/aster-api-website/futures-v3/general-info/
+
+        :param str path: implicit API path, e.g. ``fapi/v1/order``
+        :param str method: HTTP method
+        :param dict params: request parameters
+        :returns dict: url, method, body and headers for fetch()
+        """
+        v3Path = re.sub(r'^fapi/v[12]/', 'fapi/v3/', path)
+        url = self.implode_hostname(self.urls['api']['rest']) + '/' + v3Path
+        signer = self.safe_string(self.options, 'signerAddress', self.walletAddress)
+        if not signer:
+            raise ArgumentsRequired(self.id + ' V3 signing requires walletAddress (the API wallet address) or options["signerAddress"]')
+        user = self.safe_string(self.options, 'userAddress', signer)
+        nonce = self.milliseconds() * 1000
+        request = self.extend({
+            'nonce': str(nonce),
+            'user': user,
+            'signer': signer,
+        }, self.omit(params, ['timestamp', 'recvWindow']))
+        paramString = self.encode_values_with_json(request)
+        domain = {
+            'name': 'AsterSignTransaction',
+            'version': '1',
+            'chainId': self.safe_integer(self.options, 'v3ChainId', 1666),
+            'verifyingContract': '0x0000000000000000000000000000000000000000',
+        }
+        messageTypes = {
+            'Message': [
+                {'name': 'msg', 'type': 'string'},
+            ],
+        }
+        encodedMessage = self.eth_encode_structured_data(domain, messageTypes, {'msg': paramString})
+        digest = self.hash(encodedMessage, 'keccak', 'hex')
+        signature = self.ecdsa(digest[-64:], self.privateKey[-64:], 'secp256k1', None)
+        signatureHex = '0x' + signature['r'].rjust(64, '0') + signature['s'].rjust(64, '0') + format(27 + signature['v'], 'X')
+        query = paramString + '&signature=' + signatureHex
+        if method == 'GET':
+            return {'url': url + '?' + query, 'method': method, 'body': None, 'headers': None}
+        return {'url': url, 'method': method, 'body': query, 'headers': {'Content-Type': 'application/x-www-form-urlencoded'}}
+
+    def encode_values_with_json(self, values):
+        """
+        URL-encode request values the way Aster V3 signs them.
+
+        Lists and dicts are JSON-encoded first; every value is then
+        URI-component encoded. Mirrors upstream ccxt 4.5.91.
+
+        :param dict values: ordered request parameters
+        :returns str: ``key=value&...`` query string
+        """
+        parts = []
+        for key, value in values.items():
+            isObj = isinstance(value, list) or isinstance(value, dict)
+            valueString = self.json(value) if isObj else str(value)
+            parts.append(key + '=' + self.encode_uri_component(valueString))
+        return '&'.join(parts)
 
     def is_inverse(self, type: str, subType: Str = None) -> bool:
         if subType is None:
